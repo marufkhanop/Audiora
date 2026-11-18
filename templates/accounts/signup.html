@@ -1,0 +1,34 @@
+{% extends "accounts/auth_layout.html" %}
+
+{% block title %}Sign up{% endblock %}
+
+{% block auth_heading %}Start listening{% endblock %}
+{% block auth_intro %}Use your Gmail address — Audiora keeps your position in every book you start.{% endblock %}
+
+{% block auth_form %}
+<form method="post" action="{% url 'accounts:signup' %}" class="space-y-3">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ next }}">
+  <label class="block">
+    <span class="mb-1.5 block text-xs font-medium text-slate-400">Email</span>
+    <input type="email" name="email" value="{{ email|default:'' }}" required autofocus autocomplete="email"
+           placeholder="you@gmail.com"
+           class="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 text-sm text-slate-100 placeholder:text-slate-500 transition-all hover:border-white/20 focus:border-violet-400/60 focus:outline-none focus:ring-4 focus:ring-violet-500/15">
+  </label>
+  <label class="block">
+    <span class="mb-1.5 block text-xs font-medium text-slate-400">Password</span>
+    <input type="password" name="password" required minlength="8" autocomplete="new-password"
+           class="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 text-sm text-slate-100 placeholder:text-slate-500 transition-all hover:border-white/20 focus:border-violet-400/60 focus:outline-none focus:ring-4 focus:ring-violet-500/15">
+  </label>
+  <label class="block">
+    <span class="mb-1.5 block text-xs font-medium text-slate-400">Confirm password</span>
+    <input type="password" name="confirm" required minlength="8" autocomplete="new-password"
+           class="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 text-sm text-slate-100 placeholder:text-slate-500 transition-all hover:border-white/20 focus:border-violet-400/60 focus:outline-none focus:ring-4 focus:ring-violet-500/15">
+  </label>
+  <button type="submit" class="btn-grad mt-1 flex h-11 w-full items-center justify-center rounded-full text-sm font-semibold">Create account</button>
+</form>
+{% endblock %}
+
+{% block auth_footer %}
+Already have an account? <a href="{% url 'accounts:login' %}" class="font-medium text-violet-300 hover:text-white">Log in</a>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "admin/index.html" %}
+{% load cloudinary_admin %}
+
+{% block content %}
+{{ block.super }}
+
+{% cloudinary_usage as usage %}
+<div class="module" id="cloudinary-panel">
+  <h2>Storage API management</h2>
+
+  {% if usage.status == "ok" %}
+    <div class="aud-cu-quota">
+      <div class="aud-cu-head">
+        <strong>{{ usage.plan }} plan</strong>
+        <span class="aud-cu-nums">{{ usage.credits_used }} / {{ usage.credits_limit }} GB monthly credits</span>
+      </div>
+      <div class="aud-cu-bar" role="img" aria-label="Quota used {{ usage.credits_pct }}%">
+        <span class="aud-cu-fill" style="width: {{ usage.credits_pct }}%;"></span>
+      </div>
+    </div>
+    <table>
+      <tbody>
+        <tr>
+          <th scope="row">Media stored</th>
+          <td>{{ usage.storage_used }}</td>
+        </tr>
+        <tr>
+          <th scope="row">Bandwidth this month</th>
+          <td>{{ usage.bandwidth_used }}</td>
+        </tr>
+        <tr>
+          <th scope="row">Assets</th>
+          <td>{{ usage.objects }}</td>
+        </tr>
+        <tr>
+          <th scope="row">Transformations</th>
+          <td>{{ usage.transformations }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="aud-cu-updated">Local Server Storage is the default for new uploads. Sampled {{ usage.fetched_at }} · refreshes every 10 min ·
+      <a href="{% url 'admin:audiobooks_cloudstorageaccount_changelist' %}">Open storage dashboard →</a></p>
+
+  {% elif usage.status == "error" %}
+    <p class="aud-cu-note">Local Server Storage is the default for new uploads. Cloudinary usage is
+      unavailable right now (offline or API error) — it will retry in a minute.</p>
+    <p class="aud-cu-updated"><a href="{% url 'admin:audiobooks_cloudstorageaccount_changelist' %}">Open storage dashboard →</a></p>
+
+  {% else %}
+    <p class="aud-cu-note">Local Server Storage is the default; media is written to this server.
+      Add named Cloudinary accounts from the storage dashboard when you need more capacity.</p>
+    <p class="aud-cu-updated"><a href="{% url 'admin:audiobooks_cloudstorageaccount_changelist' %}">Open storage dashboard →</a></p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{# Guest library: chips + one row per category, or a results grid when searching. #}
+{% if q %}
+  {# ---------- Search results ---------- #}
+  {% if results %}
+  <section class="mx-auto max-w-[1600px] px-4 sm:px-8">
+    <div class="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      {% for book in results %}{% include "audiobooks/partials/card.html" %}{% endfor %}
+    </div>
+  </section>
+  {% else %}
+  <section class="mx-auto max-w-[1600px] px-4 sm:px-8">
+    <div class="glass rounded-3xl px-6 py-12 text-center">
+      <p class="font-display text-lg font-bold text-white">Nothing found for “{{ q }}”</p>
+      <p class="mt-1 text-sm text-slate-400">Try another title or author.</p>
+    </div>
+  </section>
+  {% endif %}
+
+{% else %}
+  {# ---------- Category filter chips (scroll right-to-left) ---------- #}
+  <div class="no-scrollbar mb-5 flex gap-2 overflow-x-auto px-4 pb-1 sm:px-8" role="tablist" aria-label="Filter by category">
+    <a href="{% url 'home' %}" hx-get="{% url 'home' %}" hx-target="#guest-library" hx-swap="innerHTML" hx-push-url="true"
+       class="chip h-9 shrink-0 rounded-full border px-4 text-sm leading-[2.125rem] {% if not active_category %}chip-active{% else %}border-white/10 bg-white/[0.03] text-slate-400 hover:border-violet-400/40 hover:text-white{% endif %}">All</a>
+    {% for cat in chips %}
+    <a href="{% url 'home' %}?category={{ cat.slug }}" hx-get="{% url 'home' %}?category={{ cat.slug }}" hx-target="#guest-library" hx-swap="innerHTML" hx-push-url="true"
+       class="chip h-9 shrink-0 rounded-full border px-4 text-sm leading-[2.125rem] {% if active_category == cat %}chip-active{% else %}border-white/10 bg-white/[0.03] text-slate-400 hover:border-violet-400/40 hover:text-white{% endif %}">{{ cat.name }}</a>
+    {% endfor %}
+  </div>
+
+  {# ---------- One horizontally scrollable row per category ---------- #}
+  {% for cat, books in rows %}
+  <section class="mx-auto max-w-[1600px] px-4 sm:px-8">
+    <div class="mb-3 flex items-baseline justify-between gap-3">
+      <h2 class="font-display text-lg font-bold text-white sm:text-xl">{{ cat.name }}</h2>
+      <span class="text-xs text-slate-500">{{ books|length }} audiobook{{ books|length|pluralize }}</span>
+    </div>
+  </section>
+  <div class="no-scrollbar mb-8 flex gap-4 overflow-x-auto px-4 pb-2 sm:gap-5 sm:px-8">
+    {% for book in books %}
+    <div class="w-36 shrink-0 sm:w-44">{% include "audiobooks/partials/card.html" %}</div>
+    {% endfor %}
+  </div>
+  {% empty %}
+  <section class="mx-auto max-w-[1600px] px-4 sm:px-8">
+    <div class="glass rounded-3xl px-6 py-12 text-center">
+      <p class="font-display text-lg font-bold text-white">Nothing here yet</p>
+      <p class="mt-1 text-sm text-slate-400">Published audiobooks will appear here.</p>
+    </div>
+  </section>
+  {% endfor %}
+{% endif %}

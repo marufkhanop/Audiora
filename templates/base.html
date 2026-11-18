@@ -1,0 +1,286 @@
+{% load static asset_version %}<!doctype html>
+<html lang="en" class="h-full bg-ink-950">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}Library{% endblock %} · Audiora</title>
+  <meta name="theme-color" content="#0C0918">
+  <script>
+    /* Apply the remembered desktop-player state before first paint. */
+    try {
+      if (localStorage.getItem('ab.playerCollapsed') === '1') {
+        document.documentElement.classList.add('player-collapsed');
+      }
+    } catch (e) {}
+  </script>
+  <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: {
+              950: '#07050F',
+              900: '#0C0918',
+              800: '#141026',
+              700: '#1D1735',
+              border: '#2A2346',
+            },
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
+  <link rel="stylesheet" href="{% static_v 'css/site.css' %}">
+</head>
+<body class="h-full min-h-dvh font-sans text-slate-100 antialiased">
+
+  <div class="htmx-progress" aria-hidden="true"></div>
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-ink-800 focus:px-4 focus:py-2 focus:text-sm">Skip to content</a>
+
+  {# ---------- Header ---------- #}
+  <header class="glass-strong fixed inset-x-0 top-0 z-30 h-16 border-b border-white/5">
+    <div class="flex h-full items-center gap-3 px-4 {% if user.is_authenticated %}md:pl-[17rem]{% endif %} md:pr-8">
+      {% if user.is_authenticated %}
+      {# Mobile hamburger — opens the navigation drawer #}
+      <button data-open-menu aria-label="Open menu" aria-controls="nav-drawer" aria-expanded="false"
+              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-white/5 hover:text-white md:hidden">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+      </button>
+      {% endif %}
+      <a href="{% url 'home' %}" hx-get="{% url 'home' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+         class="group flex items-center gap-2.5 rounded-lg py-1 md:hidden">
+        {% include "partials/logo_mark.html" with size=28 %}
+        <span class="font-display text-lg font-bold text-gradient">Audiora</span>
+      </a>
+
+      {# Desktop search (members — guests get the on-page search bar) #}
+      {% if user.is_authenticated %}
+      <div class="relative ml-auto hidden w-80 md:block lg:w-[28rem]">
+        <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-300/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" name="q" placeholder="Search titles, authors, narrators…" autocomplete="off" aria-label="Search the library"
+               class="h-10 w-full rounded-full border border-white/10 bg-white/[0.04] pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-500 transition-all duration-300 hover:border-white/20 focus:border-violet-400/60 focus:bg-white/[0.07] focus:outline-none focus:ring-4 focus:ring-violet-500/15"
+               hx-get="{% url 'search' %}" hx-trigger="input changed delay:300ms, search" hx-target="#search-panel" hx-swap="innerHTML">
+        <div id="search-panel" class="glass-strong absolute left-0 top-12 z-40 hidden max-h-[60vh] w-full min-w-[26rem] overflow-y-auto rounded-2xl border border-white/10 p-2 shadow-2xl shadow-violet-950/60"></div>
+      </div>
+      {% endif %}
+
+      {# Mobile search trigger (members) #}
+      {% if user.is_authenticated %}
+      <button id="search-open" aria-label="Open search"
+              class="ml-auto inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-white/5 hover:text-white md:hidden">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      </button>
+      {% endif %}
+
+      {% include "partials/account_menu.html" %}
+    </div>
+  </header>
+
+  {# ---------- Sidebar (desktop / tablet) — members only ---------- #}
+  {% if user.is_authenticated %}
+  <aside class="glass-strong fixed bottom-0 left-0 top-0 z-30 hidden w-60 flex-col overflow-y-auto border-r border-white/5 px-4 pb-6 md:flex">
+    <a href="{% url 'home' %}" hx-get="{% url 'home' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+       class="group -mx-1 mb-6 flex h-16 shrink-0 items-center gap-3 rounded-lg px-1">
+      {% include "partials/logo_mark.html" with size=32 %}
+      <span class="font-display text-xl font-extrabold text-gradient">Audiora</span>
+    </a>
+
+    <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Discover</p>
+    <nav class="flex flex-col gap-1" aria-label="Navigation">
+      <a href="{% url 'home' %}" data-nav hx-get="{% url 'home' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+         class="nav-link flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-slate-300">
+        <svg class="h-[18px] w-[18px] text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+        Home
+      </a>
+      <a href="/search/" data-nav hx-get="/search/" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+         class="nav-link flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-slate-300">
+        <svg class="h-[18px] w-[18px] text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        Search
+      </a>
+      {% if user.is_authenticated %}
+      <a href="{% url 'recent' %}" data-nav hx-get="{% url 'recent' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+         class="nav-link flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-slate-300">
+        <svg class="h-[18px] w-[18px] text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>
+        Recent
+      </a>
+      <a href="{% url 'saved' %}" data-nav hx-get="{% url 'saved' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+         class="nav-link flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-slate-300">
+        <svg class="h-[18px] w-[18px] text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+        Saved
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="mt-8 flex flex-col gap-1">
+      <h2 class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Categories</h2>
+      {% for cat in nav_categories %}
+      <a href="{% url 'category' cat.slug %}" data-nav hx-get="{% url 'category' cat.slug %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+         class="nav-link flex h-9 items-center gap-3 rounded-xl px-3 text-sm text-slate-400">
+        <span class="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-violet-400 to-fuchsia-400 opacity-70"></span>
+        {{ cat.name }}
+      </a>
+      {% endfor %}
+    </div>
+
+    <div class="grad-border mt-auto rounded-2xl p-4" style="background: var(--grad-soft)">
+      {% if user.is_authenticated %}
+      <p class="font-display text-sm font-bold text-white">Your place is saved</p>
+      <p class="mt-1 text-xs leading-relaxed text-slate-400">Pick up on any device from the exact second you stopped.</p>
+      {% else %}
+      <p class="font-display text-sm font-bold text-white">Listen freely</p>
+      <p class="mt-1 text-xs leading-relaxed text-slate-400">No ads. Sign in with Gmail to keep your place.</p>
+      {% endif %}
+    </div>
+  </aside>
+  {% endif %}
+
+  {# ---------- Main content (HTMX swaps in here) ---------- #}
+  {# Bottom padding is set dynamically in JS (--content-pad-bottom) #}
+  <main id="main-content" class="min-h-dvh pt-16 {% if user.is_authenticated %}md:pl-60{% endif %}">
+    {% block main %}{% endblock %}
+  </main>
+
+  {# ---------- Mobile search drawer (members — guests search on-page) ---------- #}
+  {% if user.is_authenticated %}
+  <div id="search-drawer" class="fixed inset-0 z-50 hidden md:hidden" aria-modal="true" role="dialog">
+    <div class="absolute inset-0 bg-ink-950/70 backdrop-blur-md" data-close-search></div>
+    <div class="glass-strong absolute inset-x-0 top-0 max-h-[85dvh] overflow-y-auto rounded-b-3xl border-b border-white/10 p-4 shadow-2xl shadow-violet-950/50">
+      <div class="flex items-center gap-2">
+        <div class="relative flex-1">
+          <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-300/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" name="q" id="search-drawer-input" placeholder="Search titles, authors…" autocomplete="off"
+                 class="h-11 w-full rounded-full border border-white/10 bg-white/[0.05] pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-500 transition-all focus:border-violet-400/60 focus:outline-none focus:ring-4 focus:ring-violet-500/15"
+                 hx-get="{% url 'search' %}" hx-trigger="input changed delay:300ms, search" hx-target="#search-drawer-results" hx-swap="innerHTML">
+        </div>
+        <button data-close-search aria-label="Close search"
+                class="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white/5 hover:text-white">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div id="search-drawer-results" class="mt-3"></div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ---------- Mobile navigation drawer (hamburger) ---------- #}
+  {% if user.is_authenticated %}
+  <div id="nav-drawer" class="nav-drawer fixed inset-0 z-50 is-closed md:hidden" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="nav-backdrop absolute inset-0 bg-ink-950/95 backdrop-blur-md" data-close-menu></div>
+    <aside class="nav-panel glass-strong absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto overscroll-contain border-r border-white/10 px-4 pb-6 pt-2 shadow-2xl shadow-violet-950/60">
+      <div class="flex h-14 shrink-0 items-center justify-between">
+        <span class="flex items-center gap-2.5">
+          {% include "partials/logo_mark.html" with size=28 %}
+          <span class="font-display text-lg font-bold text-gradient">Audiora</span>
+        </span>
+        <button data-close-menu aria-label="Close menu"
+                class="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white/5 hover:text-white">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+
+      <p class="px-3 pb-2 pt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Discover</p>
+      <nav class="flex flex-col gap-1" aria-label="Mobile navigation">
+        <a href="{% url 'home' %}" data-nav hx-get="{% url 'home' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+           class="nav-link flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-slate-300">
+          <svg class="h-[18px] w-[18px] text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+          Home
+        </a>
+        <a href="/search/" data-nav hx-get="/search/" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+           class="nav-link flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-slate-300">
+          <svg class="h-[18px] w-[18px] text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          Search
+        </a>
+        <a href="{% url 'recent' %}" data-nav hx-get="{% url 'recent' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+           class="nav-link flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-slate-300">
+          <svg class="h-[18px] w-[18px] text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>
+          Recent
+        </a>
+        <a href="{% url 'saved' %}" data-nav hx-get="{% url 'saved' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+           class="nav-link flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-slate-300">
+          <svg class="h-[18px] w-[18px] text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+          Saved
+        </a>
+      </nav>
+
+      <div class="mt-6 flex flex-col gap-1">
+        <h2 class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Categories</h2>
+        {% for cat in nav_categories %}
+        <a href="{% url 'category' cat.slug %}" data-nav hx-get="{% url 'category' cat.slug %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+           class="nav-link flex h-9 items-center gap-3 rounded-xl px-3 text-sm text-slate-400">
+          <span class="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-violet-400 to-fuchsia-400 opacity-70"></span>
+          {{ cat.name }}
+        </a>
+        {% endfor %}
+      </div>
+
+      {% firstof user.first_name user.email user.username as drawer_name %}
+      <div class="grad-border mt-auto rounded-2xl p-4" style="background: var(--grad-soft)">
+        <div class="flex min-w-0 items-center gap-3">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-xs font-bold uppercase text-white">{{ drawer_name|slice:":1" }}</span>
+          <span class="min-w-0">
+            <p class="truncate text-sm font-semibold text-white">{{ drawer_name }}</p>
+            <p class="truncate text-xs text-slate-400">{{ user.email|default:user.username }}</p>
+          </span>
+        </div>
+        <form method="post" action="{% url 'accounts:logout' %}" class="mt-3">
+          {% csrf_token %}
+          <button type="submit"
+                  class="btn-ghost flex h-9 w-full items-center justify-center gap-2 rounded-full text-sm text-slate-200">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+            Log out
+          </button>
+        </form>
+      </div>
+    </aside>
+  </div>
+  {% endif %}
+
+  {# ---------- Mobile bottom nav (members — guests browse the one page) ---------- #}
+  {% if user.is_authenticated %}
+  <nav class="glass-strong fixed inset-x-0 bottom-0 z-30 flex h-16 items-center border-t border-white/5 px-2 md:hidden" aria-label="Bottom navigation">
+    <a href="{% url 'home' %}" data-nav hx-get="{% url 'home' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+       class="bottom-link flex flex-1 flex-col items-center justify-center gap-1 rounded-lg py-1 text-slate-400 transition-colors hover:text-white">
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+      <span class="text-[11px]">Home</span>
+    </a>
+    <a href="{% url 'saved' %}" data-nav hx-get="{% url 'saved' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+       class="bottom-link flex flex-1 flex-col items-center justify-center gap-1 rounded-lg py-1 text-slate-400 transition-colors hover:text-white">
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+      <span class="text-[11px]">Saved</span>
+    </a>
+    {% if user.is_authenticated %}
+    <a href="{% url 'recent' %}" data-nav hx-get="{% url 'recent' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+       class="bottom-link flex flex-1 flex-col items-center justify-center gap-1 rounded-lg py-1 text-slate-400 transition-colors hover:text-white">
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>
+      <span class="text-[11px]">Recent</span>
+    </a>
+    {% else %}
+    <a href="{% url 'accounts:login' %}"
+       class="bottom-link flex flex-1 flex-col items-center justify-center gap-1 rounded-lg py-1 text-slate-400 transition-colors hover:text-white">
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="text-[11px]">Log in</span>
+    </a>
+    {% endif %}
+  </nav>
+  {% endif %}
+
+  {# Keep the audio element outside the HTMX-swapped controls. #}
+  <audio id="audio" preload="metadata"></audio>
+
+  {# ---------- Persistent player ---------- #}
+  {% include "player/partials/player.html" %}
+
+  <script src="{% static_v 'js/player.js' %}" defer></script>
+</body>
+</html>

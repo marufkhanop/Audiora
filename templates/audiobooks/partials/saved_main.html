@@ -1,0 +1,38 @@
+<section class="mx-auto max-w-[1600px] px-4 pt-8 sm:px-8">
+  <p class="reveal text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-300/80">Your library</p>
+  <h1 class="reveal reveal-1 font-display mt-2 text-3xl font-extrabold text-white sm:text-4xl">Saved <span class="text-gradient">audiobooks</span></h1>
+  <p class="reveal reveal-2 mt-2 max-w-xl text-sm leading-relaxed text-slate-400">Books you bookmarked for later. Tap the bookmark on any audiobook to add or remove it here.</p>
+  <div class="divider-grad mt-6"></div>
+</section>
+
+{% if books %}
+<section class="mx-auto max-w-[1600px] px-4 py-6 sm:px-8">
+  <div class="stagger grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+    {% for book in books %}
+    <div>
+      {% include "audiobooks/partials/card.html" %}
+      <form method="post" action="{% url 'toggle_saved' book.slug %}" hx-boost="false" class="mt-1">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="inline-flex items-center gap-1 px-0.5 text-xs text-slate-500 transition-colors hover:text-violet-300">
+          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+          Remove
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% else %}
+<section class="mx-auto max-w-[1600px] px-4 py-8 sm:px-8">
+  <div class="glass mx-auto max-w-xl rounded-3xl p-8 text-center">
+    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 shadow-lg shadow-violet-900/50">
+      <svg class="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+    </div>
+    <p class="font-display mt-5 text-lg font-bold text-white">Nothing saved yet</p>
+    <p class="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-slate-400">Open any audiobook and tap Save to keep it here for later.</p>
+    <a href="{% url 'home' %}" hx-get="{% url 'home' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+       class="btn-grad mt-6 inline-flex h-10 items-center rounded-full px-5 text-sm font-semibold">Browse the library</a>
+  </div>
+</section>
+{% endif %}

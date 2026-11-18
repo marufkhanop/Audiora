@@ -1,0 +1,12 @@
+{% comment %}
+  Persistent bottom player — swapped via HTMX when a new track is requested.
+  On a fresh page load it falls back to the signed-in listener's last book,
+  so returning visitors resume exactly where they stopped.
+{% endcomment %}
+{% if book %}
+  {% include "player/partials/player_body.html" with track=book start=start_position %}
+{% elif resume_book %}
+  {% include "player/partials/player_body.html" with track=resume_book start=resume_position %}
+{% else %}
+  {% include "player/partials/player_body.html" with start=0 %}
+{% endif %}

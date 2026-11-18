@@ -1,0 +1,26 @@
+{# Header account area: Gmail / email sign-in for listeners. #}
+{% if user.is_authenticated %}
+{% firstof user.first_name user.email user.username as display_name %}
+<div class="hidden items-center gap-2 md:flex">
+  <a href="{% url 'recent' %}" hx-get="{% url 'recent' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+     title="{{ user.email|default:user.username }}"
+     class="btn-ghost flex h-9 items-center gap-2 rounded-full pl-1 pr-3.5 text-sm text-slate-200">
+    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-[11px] font-bold uppercase text-white">{{ display_name|slice:":1" }}</span>
+    <span class="max-w-[10rem] truncate">{{ display_name }}</span>
+  </a>
+  <form method="post" action="{% url 'accounts:logout' %}" class="contents">
+    {% csrf_token %}
+    <button type="submit" class="text-xs text-slate-400 transition-colors hover:text-white">Log out</button>
+  </form>
+</div>
+<a href="{% url 'recent' %}" hx-get="{% url 'recent' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+   aria-label="Your recent listens" title="{{ user.email|default:user.username }}"
+   class="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-[11px] font-bold uppercase text-white md:hidden">{{ display_name|slice:":1" }}</a>
+{% else %}
+<div class="ml-auto flex items-center gap-2">
+  <a href="{% url 'accounts:login' %}"
+     class="btn-ghost inline-flex h-9 items-center rounded-full px-3.5 text-sm text-slate-300 sm:px-4">Log in</a>
+  <a href="{% url 'accounts:signup' %}"
+     class="btn-grad inline-flex h-9 items-center rounded-full px-3.5 text-sm font-semibold sm:px-4">Sign up</a>
+</div>
+{% endif %}

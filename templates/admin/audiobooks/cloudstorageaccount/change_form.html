@@ -1,0 +1,9 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block bodyclass %}{{ block.super }} stor-page stor-form-page{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_storage.css' %}">
+{% endblock %}

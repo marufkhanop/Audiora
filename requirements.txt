@@ -1,0 +1,17 @@
+# Audiora — Django Audiobook Streaming Platform
+# Six packages. Cloudinary credentials are optional (local storage works
+# without an account), but the packages are required by migrations.
+# Tested with Python 3.12+ and these versions:
+#   Django 6.1.3 · Pillow 13.0.0 · Mutagen 1.48.1 · django-htmx 1.29.0
+#   cloudinary 1.47.0 · django-cloudinary-storage 0.3.0
+# Django 5.x also works on Python 3.10+.
+
+Django>=5.0,<7.0
+Pillow>=10.0
+Mutagen>=1.47
+django-htmx>=1.17
+
+# Cloudinary storage backends (also required by migrations; credentials are
+# only needed when an actual cloud account is configured).
+cloudinary>=1.40
+django-cloudinary-storage>=0.3.0

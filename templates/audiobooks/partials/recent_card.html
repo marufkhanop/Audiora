@@ -1,0 +1,26 @@
+<div class="book-card group relative" data-book-card data-book-id="{{ book.id }}">
+  <a href="{% url 'book_detail' book.slug %}" hx-get="{% url 'book_detail' book.slug %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true" class="block rounded-2xl">
+    <div class="cover-wrap relative aspect-square overflow-hidden rounded-2xl bg-ink-700 ring-1 ring-white/5">
+      <img src="{{ book.cover_url }}" alt="Cover of {{ book.title }}" loading="lazy"
+           class="h-full w-full object-cover">
+      <span class="np-bars absolute bottom-8 left-3 z-[2] h-4 rounded-md bg-ink-950/80 px-1.5 py-1 backdrop-blur" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span data-play="{{ book.id }}" role="button" tabindex="0" aria-label="{{ book.listen_progress.resume_label }} {{ book.title }}"
+            hx-get="{% url 'player_play' book.id %}" hx-trigger="click consume" hx-target="#global-player" hx-swap="outerHTML"
+            class="card-play btn-grad absolute bottom-8 right-3 z-[2] inline-flex h-11 w-11 items-center justify-center rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+        <svg class="ml-0.5 h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+      </span>
+      <span class="absolute inset-x-0 bottom-0 z-[2] h-1.5 bg-ink-950/70">
+        <span class="block h-full rounded-r-full bg-gradient-to-r from-violet-400 via-fuchsia-400 to-fuchsia-300 shadow-[0_0_12px_rgba(217,70,239,.8)]"
+              style="width: {{ book.listen_progress.percent }}%"></span>
+      </span>
+    </div>
+    <h3 class="mt-3.5 truncate text-[15px] font-semibold text-slate-100 transition-colors">{{ book.title }}</h3>
+    <p class="truncate text-sm text-slate-400">{{ book.author }}</p>
+    <p class="mt-1.5 flex items-center gap-1.5 truncate text-xs text-violet-300/90">
+      <svg class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>
+      <span class="tabular-nums">{{ book.listen_progress.resume_label }}</span>
+      <span class="text-slate-600">·</span>
+      <span class="tabular-nums">{{ book.listen_progress.percent }}%</span>
+    </p>
+  </a>
+</div>

@@ -1,0 +1,312 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block bodyclass %}stor-page{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_storage.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a>
+  &rsaquo; Storage API management
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="stor-wrap" id="storage-dashboard">
+
+  <header class="stor-hero">
+    <div class="stor-hero-copy">
+      <span class="stor-eyebrow">Infrastructure</span>
+      <h1>Storage API management</h1>
+      <p>
+        Local Server Storage is the permanent default. Add named Cloudinary
+        accounts to extend capacity, then choose a destination on each upload.
+      </p>
+    </div>
+    {% if has_add_permission %}
+    <a class="stor-btn stor-btn-primary" href="{% url 'admin:audiobooks_cloudstorageaccount_add' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      Add Cloudinary account
+    </a>
+    {% endif %}
+  </header>
+
+  {# ---------- Combined overview ---------- #}
+  <section class="stor-overview" aria-label="Combined storage overview">
+    <div class="stor-overview-head">
+      <div>
+        <h2>Storage overview</h2>
+        <p>{{ backend_count }} backend{{ backend_count|pluralize }} · {{ active_backends }} active · all figures combined</p>
+      </div>
+      <span class="stor-pill">{{ cloud_count }} Cloudinary account{{ cloud_count|pluralize }}</span>
+    </div>
+
+    <div class="stor-kpis">
+      <div class="stor-kpi">
+        <span class="stor-kpi-label">Total media stored</span>
+        <strong>{{ total_storage }}</strong>
+        <small>{{ total_objects }} stored asset{{ total_objects|pluralize }}</small>
+      </div>
+      <div class="stor-kpi">
+        <span class="stor-kpi-label">Combined bandwidth</span>
+        <strong>{{ total_bandwidth }}</strong>
+        <small>this month across cloud backends</small>
+      </div>
+      <div class="stor-kpi">
+        <span class="stor-kpi-label">Audiobooks</span>
+        <strong>{{ total_books }}</strong>
+        <small>routed across {{ backend_count }} backend{{ backend_count|pluralize }}</small>
+      </div>
+    </div>
+
+    <div class="stor-sharebar" role="img"
+         aria-label="Media distribution: {% for item in items %}{{ item.obj.name }} {{ item.share_pct }} percent{% if not forloop.last %}, {% endif %}{% endfor %}">
+      {% for item in items %}
+        {% if item.share_pct %}
+        <span class="stor-share-seg" style="width: {{ item.share_pct }}%; background: {{ item.color }};"
+              title="{{ item.obj.name }} — {{ item.usage.storage_used }} ({{ item.share_pct }}%)"></span>
+        {% endif %}
+      {% empty %}
+        <span class="stor-share-empty"></span>
+      {% endfor %}
+    </div>
+
+    <ul class="stor-legend">
+      {% for item in items %}
+      <li>
+        <i style="background: {{ item.color }};" aria-hidden="true"></i>
+        <span class="stor-legend-name">{{ item.obj.name }}</span>
+        <span class="stor-legend-value">{{ item.usage.storage_used }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  {# ---------- Default storage ---------- #}
+  <section class="stor-section">
+    <div class="stor-section-head">
+      <div>
+        <h2>Default storage</h2>
+        <p>System protected — always available, never renamed or removed.</p>
+      </div>
+    </div>
+
+    <article class="stor-card stor-card-default">
+      <a class="stor-card-hit" href="{% url 'admin:audiobooks_cloudstorageaccount_local_books' %}"
+         aria-label="View audiobooks stored in Local Server Storage">
+        <div class="stor-head">
+          <span class="stor-icon stor-icon-local" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>
+          </span>
+          <div class="stor-head-text">
+            <h3>{{ local.name }}</h3>
+            <span class="stor-sub">MEDIA_ROOT · this server</span>
+          </div>
+          <div class="stor-badges">
+            <span class="stor-badge stor-badge-default">Default</span>
+            <span class="stor-badge stor-badge-lock">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+              System Protected
+            </span>
+          </div>
+        </div>
+
+        <div class="stor-local-stats">
+          <div class="stor-mini-stat">
+            <span>Files on disk</span>
+            <strong>{{ local_item.usage.objects }}</strong>
+          </div>
+          <div class="stor-mini-stat">
+            <span>Total size</span>
+            <strong>{{ local_item.usage.storage_used }}</strong>
+          </div>
+          <div class="stor-mini-stat">
+            <span>Audiobooks</span>
+            <strong>{{ local_item.books }}</strong>
+          </div>
+          <div class="stor-mini-stat">
+            <span>Quota</span>
+            <strong>Unlimited</strong>
+          </div>
+        </div>
+
+        <p class="stor-note stor-note-inline">
+          Files are saved directly to <code>MEDIA_ROOT</code>. No API keys,
+          billing or upload limits. This backend cannot be deleted or renamed.
+        </p>
+      </a>
+
+      <div class="stor-actions">
+        <a class="stor-btn" href="{% url 'admin:audiobooks_cloudstorageaccount_local_books' %}">
+          View books ({{ local_item.books }})
+        </a>
+        <button type="button" class="stor-btn stor-btn-danger is-locked" disabled
+                title="Local Server Storage is the permanent system default and cannot be deleted.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          Delete locked
+        </button>
+      </div>
+    </article>
+  </section>
+
+  {# ---------- Cloudinary accounts ---------- #}
+  <section class="stor-section">
+    <div class="stor-section-head">
+      <div>
+        <h2>Cloudinary accounts</h2>
+        <p>Named API configurations. Each account is its own independent cloud.</p>
+      </div>
+      <span class="stor-section-count">{{ cloud_count }}</span>
+    </div>
+
+    <div class="stor-grid">
+      {% for item in cloud_items %}
+      <article class="stor-card stor-card-cloud">
+        <a class="stor-card-hit" href="{% url 'admin:audiobooks_cloudstorageaccount_books' item.obj.pk %}"
+           aria-label="View audiobooks stored on {{ item.obj.name }}">
+          <div class="stor-head">
+            <span class="stor-icon stor-icon-cloud" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.3 8.7 4 4 0 0 0 7 16.5"/><path d="M12 12v7M9 16l3-3 3 3"/></svg>
+            </span>
+            <div class="stor-head-text">
+              <h3>{{ item.obj.name }}</h3>
+              <span class="stor-sub">{{ item.obj.cloud_name }}</span>
+            </div>
+            {% if item.usage.error %}
+              <span class="stor-badge stor-badge-warn">Offline</span>
+            {% else %}
+              <span class="stor-badge">Cloudinary</span>
+            {% endif %}
+          </div>
+
+          {% if item.usage.error %}
+          <p class="stor-error">
+            Usage unavailable — {{ item.usage.error }}
+          </p>
+          {% else %}
+          <div class="stor-meter-label">
+            <span>Credit consumption</span>
+            <strong{% if item.usage.credits_pct >= 90 %} class="stor-danger-text"{% endif %}>{{ item.usage.credits_pct }}%</strong>
+          </div>
+          <div class="stor-meter{% if item.usage.credits_pct >= 90 %} stor-meter-danger{% endif %}"
+               role="img" aria-label="Credit consumption {{ item.usage.credits_pct }} percent">
+            <span style="width: {{ item.usage.credits_pct }}%;"></span>
+          </div>
+          <p class="stor-meter-note">{{ item.usage.credits_label }}</p>
+
+          <ul class="stor-stats">
+            <li><span>Media stored</span><strong>{{ item.usage.storage_used }}</strong></li>
+            <li><span>Bandwidth (month)</span><strong>{{ item.usage.bandwidth_used }}</strong></li>
+            <li><span>Assets</span><strong>{{ item.usage.objects }}</strong></li>
+            <li><span>Audiobooks</span><strong>{{ item.books }}</strong></li>
+          </ul>
+          {% endif %}
+        </a>
+
+        <div class="stor-actions">
+          <a class="stor-btn" href="{% url 'admin:audiobooks_cloudstorageaccount_books' item.obj.pk %}">
+            View details
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          </a>
+          <button type="button" class="stor-btn stor-btn-danger"
+                  data-delete-open
+                  data-account-id="{{ item.obj.pk }}"
+                  data-account-name="{{ item.obj.name }}"
+                  data-account-cloud="{{ item.obj.cloud_name }}"
+                  data-account-books="{{ item.books }}"
+                  data-account-assets="{{ item.usage.objects }}"
+                  data-delete-url="{% url 'admin:audiobooks_cloudstorageaccount_delete' item.obj.pk %}">
+            Delete
+          </button>
+        </div>
+      </article>
+      {% empty %}
+      <div class="stor-card stor-card-empty">
+        <span class="stor-empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.3 8.7 4 4 0 0 0 7 16.5"/><path d="M12 15v-4M10 13l2 2 2-2"/></svg>
+        </span>
+        <h3>No Cloudinary accounts yet</h3>
+        <p class="stor-note">
+          Everything currently uploads to Local Server Storage. Add a named
+          Cloudinary account to extend capacity, then pick it as the Storage
+          Destination on any new upload.
+        </p>
+        {% if has_add_permission %}
+        <a class="stor-btn stor-btn-primary" href="{% url 'admin:audiobooks_cloudstorageaccount_add' %}">
+          Add your first account
+        </a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+{# ---------- Delete confirmation modal ---------- #}
+<dialog id="stor-delete-dialog" class="stor-dialog" aria-labelledby="stor-delete-title">
+  <div class="stor-dialog-card">
+    <span class="stor-dialog-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
+    </span>
+    <h3 id="stor-delete-title">Delete storage account?</h3>
+    <p class="stor-dialog-lede">
+      <strong id="stor-delete-name">This account</strong> will be disconnected
+      and its remote files permanently wiped from
+      <code id="stor-delete-cloud">Cloudinary</code>.
+    </p>
+    <div class="stor-dialog-warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+      <span>
+        <strong id="stor-delete-assets">0</strong> remote asset(s) and
+        <strong id="stor-delete-books">0</strong> audiobook(s) will be deleted.
+        This cannot be undone.
+      </span>
+    </div>
+    <div class="stor-dialog-actions">
+      <button type="button" class="stor-btn" data-delete-cancel>Cancel</button>
+      <form id="stor-delete-form" method="post">
+        {% csrf_token %}
+        <button type="submit" class="stor-btn stor-btn-danger">Delete permanently</button>
+      </form>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  var dialog = document.getElementById('stor-delete-dialog');
+  if (!dialog) return;
+  var form = document.getElementById('stor-delete-form');
+  var nameEl = document.getElementById('stor-delete-name');
+  var cloudEl = document.getElementById('stor-delete-cloud');
+  var assetsEl = document.getElementById('stor-delete-assets');
+  var booksEl = document.getElementById('stor-delete-books');
+
+  function openDialog(button) {
+    form.action = button.getAttribute('data-delete-url');
+    nameEl.textContent = button.getAttribute('data-account-name') || 'This account';
+    cloudEl.textContent = button.getAttribute('data-account-cloud') || 'Cloudinary';
+    assetsEl.textContent = button.getAttribute('data-account-assets') || '0';
+    booksEl.textContent = button.getAttribute('data-account-books') || '0';
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else if (window.confirm('Permanently delete this account and wipe its remote files?')) {
+      form.submit();
+    }
+  }
+
+  document.querySelectorAll('[data-delete-open]').forEach(function (button) {
+    button.addEventListener('click', function () { openDialog(button); });
+  });
+  var cancel = dialog.querySelector('[data-delete-cancel]');
+  if (cancel) cancel.addEventListener('click', function () { dialog.close(); });
+  dialog.addEventListener('click', function (event) {
+    if (event.target === dialog) dialog.close();
+  });
+})();
+</script>
+{% endblock %}

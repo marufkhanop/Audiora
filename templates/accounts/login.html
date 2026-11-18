@@ -1,0 +1,29 @@
+{% extends "accounts/auth_layout.html" %}
+
+{% block title %}Log in{% endblock %}
+
+{% block auth_heading %}Welcome back{% endblock %}
+{% block auth_intro %}Log in with the Gmail address you signed up with to resume your books.{% endblock %}
+
+{% block auth_form %}
+<form method="post" action="{% url 'accounts:login' %}" class="space-y-3">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ next }}">
+  <label class="block">
+    <span class="mb-1.5 block text-xs font-medium text-slate-400">Email</span>
+    <input type="email" name="email" value="{{ email|default:'' }}" required autofocus autocomplete="email"
+           placeholder="you@gmail.com"
+           class="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 text-sm text-slate-100 placeholder:text-slate-500 transition-all hover:border-white/20 focus:border-violet-400/60 focus:outline-none focus:ring-4 focus:ring-violet-500/15">
+  </label>
+  <label class="block">
+    <span class="mb-1.5 block text-xs font-medium text-slate-400">Password</span>
+    <input type="password" name="password" required autocomplete="current-password"
+           class="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 text-sm text-slate-100 placeholder:text-slate-500 transition-all hover:border-white/20 focus:border-violet-400/60 focus:outline-none focus:ring-4 focus:ring-violet-500/15">
+  </label>
+  <button type="submit" class="btn-grad mt-1 flex h-11 w-full items-center justify-center rounded-full text-sm font-semibold">Log in</button>
+</form>
+{% endblock %}
+
+{% block auth_footer %}
+New here? <a href="{% url 'accounts:signup' %}" class="font-medium text-violet-300 hover:text-white">Create an account</a>
+{% endblock %}

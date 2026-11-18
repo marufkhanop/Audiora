@@ -1,0 +1,44 @@
+{% if featured %}
+{# ---------- Big hero: the latest upload ---------- #}
+<section class="px-4 pt-4 sm:px-8">
+  <div class="grad-border reveal relative mx-auto max-w-[1600px] overflow-hidden rounded-3xl">
+    <div class="absolute inset-0" aria-hidden="true">
+      <img src="{{ featured.cover_url }}" alt="" class="h-full w-full scale-125 object-cover opacity-40 blur-3xl">
+      <div class="absolute inset-0 bg-gradient-to-br from-ink-950/80 via-violet-950/70 to-fuchsia-950/60"></div>
+    </div>
+
+    <div class="relative flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-8 lg:p-10">
+      <img src="{{ featured.cover_url }}" alt="Cover of {{ featured.title }}"
+           class="scale-in h-40 w-40 shrink-0 self-center rounded-2xl object-cover shadow-2xl shadow-violet-950/60 ring-1 ring-white/15 sm:h-48 sm:w-48 sm:self-auto lg:h-56 lg:w-56">
+      <div class="min-w-0">
+        <h1 class="font-display text-2xl font-extrabold leading-tight text-white sm:text-3xl lg:text-4xl">{{ featured.title }}</h1>
+        <p class="mt-2 text-sm text-slate-300">{{ featured.author }}{% if featured.narrator %} · {{ featured.narrator }}{% endif %}</p>
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          <button data-play="{{ featured.id }}" hx-get="{% url 'player_play' featured.id %}" hx-target="#global-player" hx-swap="outerHTML"
+                  class="btn-grad inline-flex h-11 items-center gap-2 rounded-full px-6 text-sm font-semibold">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            Listen
+          </button>
+          <span class="rounded-full bg-white/5 px-3 py-1.5 text-xs tabular-nums text-slate-300 ring-1 ring-white/10">{{ featured.duration_hms }}</span>
+          {% if featured.category %}<span class="rounded-full bg-white/5 px-3 py-1.5 text-xs text-slate-300 ring-1 ring-white/10">{{ featured.category.name }}</span>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---------- Search (stays put while the library below is swapped) ---------- #}
+<section class="mx-auto max-w-[1600px] px-4 pt-5 sm:px-8">
+  <div class="relative">
+    <svg class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-300/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input type="search" name="q" value="{{ q }}" placeholder="Search audiobooks…" autocomplete="off" aria-label="Search audiobooks"
+           class="h-11 w-full rounded-full border border-white/10 bg-white/[0.04] pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-500 transition-all focus:border-violet-400/60 focus:outline-none focus:ring-4 focus:ring-violet-500/15"
+           hx-get="{% url 'home' %}" hx-trigger="input changed delay:300ms, search" hx-target="#guest-library" hx-swap="innerHTML">
+  </div>
+</section>
+
+{# ---------- Category chips + rows — swapped by search & filters ---------- #}
+<div id="guest-library" class="pt-6 pb-12">
+  {% include "audiobooks/partials/guest_library.html" %}
+</div>

@@ -1,0 +1,93 @@
+<div class="mx-auto max-w-[1600px] px-4 py-6 sm:px-8">
+  <a href="{% url 'home' %}" hx-get="{% url 'home' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+     class="group inline-flex h-9 items-center gap-2 rounded-full px-3 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-white">
+    <svg class="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+    Back to library
+  </a>
+
+  <section class="grad-border relative mt-4 overflow-hidden rounded-3xl">
+    <div class="absolute inset-0" aria-hidden="true">
+      <img src="{{ book.cover_url }}" alt="" class="h-full w-full scale-125 object-cover opacity-35 blur-3xl">
+      <div class="absolute inset-0 bg-gradient-to-br from-ink-950/85 via-violet-950/70 to-fuchsia-950/60"></div>
+    </div>
+
+    <div class="relative flex flex-col gap-8 p-6 sm:flex-row sm:items-end sm:gap-10 sm:p-10">
+      <div class="scale-in relative w-48 shrink-0 self-start sm:w-56 md:w-64 lg:w-72">
+        <img src="{{ book.cover_url }}" alt="" aria-hidden="true" class="absolute inset-0 h-full w-full translate-y-4 scale-95 rounded-2xl object-cover opacity-70 blur-2xl">
+        <img src="{{ book.cover_url }}" alt="Cover of {{ book.title }}"
+             class="relative w-full rounded-2xl object-cover shadow-2xl shadow-violet-950/60 ring-1 ring-white/15">
+      </div>
+      <div class="min-w-0 flex-1">
+        {% if book.category %}
+        <span class="reveal reveal-1 inline-flex rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-200">{{ book.category.name }}</span>
+        {% endif %}
+        <h1 class="reveal reveal-2 font-display mt-4 text-3xl font-extrabold leading-[1.1] text-white sm:text-4xl lg:text-5xl">{{ book.title }}</h1>
+        <p class="reveal reveal-2 mt-3 text-sm text-slate-300 sm:text-base">{{ book.author }} <span class="text-violet-400/60">·</span> read by <span class="text-violet-200">{{ book.narrator }}</span></p>
+
+        <div class="reveal reveal-3 mt-8 flex flex-wrap items-center gap-3">
+          {% if user.is_authenticated %}
+          <button data-play="{{ book.id }}" hx-get="{% url 'player_play' book.id %}" hx-target="#global-player" hx-swap="outerHTML"
+                  class="btn-grad inline-flex h-12 items-center gap-2 rounded-full px-7 text-sm font-semibold">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            Listen now
+          </button>
+          {% else %}
+          <a href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}"
+             class="btn-grad inline-flex h-12 items-center gap-2 rounded-full px-7 text-sm font-semibold">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Log in to listen
+          </a>
+          {% endif %}
+          {% if user.is_authenticated %}
+          <form method="post" action="{% url 'toggle_saved' book.slug %}" hx-boost="false" class="inline-flex">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" aria-pressed="{{ is_saved|yesno:'true,false' }}"
+                    class="btn-ghost inline-flex h-12 items-center gap-2 rounded-full px-5 text-sm font-medium {% if is_saved %}text-violet-200 ring-1 ring-violet-400/40{% else %}text-slate-200{% endif %}">
+              {% if is_saved %}
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>
+              Saved
+              {% else %}
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+              Save
+              {% endif %}
+            </button>
+          </form>
+          {% endif %}
+          <span class="rounded-full bg-white/5 px-3 py-1.5 text-xs text-slate-300 ring-1 ring-white/10"><span class="tabular-nums">{{ book.duration_hms }}</span> · {{ book.formatted_duration }}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex flex-col gap-8 py-10 lg:flex-row lg:gap-12">
+    <div class="reveal reveal-3 max-w-2xl flex-1">
+      <h2 class="font-display text-lg font-bold text-white">About this audiobook</h2>
+      <div class="mt-3 text-[15px] leading-relaxed text-slate-300 [&_p]:mb-4">{{ book.description|linebreaks }}</div>
+    </div>
+    <dl class="reveal reveal-4 glass shrink-0 self-start rounded-2xl p-2 text-sm lg:w-80">
+      <div class="flex items-baseline justify-between gap-6 rounded-xl px-4 py-3 transition-colors hover:bg-white/[0.03]">
+        <dt class="text-slate-500">Author</dt><dd class="text-right font-medium text-slate-100">{{ book.author }}</dd>
+      </div>
+      <div class="flex items-baseline justify-between gap-6 rounded-xl px-4 py-3 transition-colors hover:bg-white/[0.03]">
+        <dt class="text-slate-500">Narrator</dt><dd class="text-right font-medium text-slate-100">{{ book.narrator }}</dd>
+      </div>
+      <div class="flex items-baseline justify-between gap-6 rounded-xl px-4 py-3 transition-colors hover:bg-white/[0.03]">
+        <dt class="text-slate-500">Duration</dt><dd class="text-right font-medium tabular-nums text-slate-100">{{ book.duration_hms }}</dd>
+      </div>
+      <div class="flex items-baseline justify-between gap-6 rounded-xl px-4 py-3 transition-colors hover:bg-white/[0.03]">
+        <dt class="text-slate-500">Category</dt><dd class="text-right font-medium text-slate-100">{{ book.category.name|default:"—" }}</dd>
+      </div>
+    </dl>
+  </div>
+
+  {% if related %}
+  <section class="pt-2">
+    <div class="divider-grad mb-8"></div>
+    <h2 class="font-display text-xl font-bold text-white">More in <span class="text-gradient">{{ book.category.name }}</span></h2>
+    <div class="stagger mt-6 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+      {% for book in related %}{% include "audiobooks/partials/card.html" %}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>

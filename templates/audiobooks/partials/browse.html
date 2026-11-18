@@ -1,0 +1,29 @@
+<section class="mx-auto max-w-[1600px] px-4 py-6 sm:px-8" id="library">
+  {% if categories %}
+  <div class="no-scrollbar -mx-1 mb-8 flex gap-2 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Categories">
+    {% if user.is_authenticated %}
+    <a href="{% url 'recent' %}" hx-get="{% url 'recent' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+       class="chip h-9 shrink-0 rounded-full border px-4 text-sm leading-[2.125rem] {% if active_category == 'recent' %}chip-active{% else %}border-white/10 bg-white/[0.03] text-slate-400 hover:border-violet-400/40 hover:text-white{% endif %}">Recent</a>
+    {% endif %}
+    <a href="{% url 'home' %}" hx-get="{% url 'home' %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+       class="chip h-9 shrink-0 rounded-full border px-4 text-sm leading-[2.125rem] {% if not active_category %}chip-active{% else %}border-white/10 bg-white/[0.03] text-slate-400 hover:border-violet-400/40 hover:text-white{% endif %}">All</a>
+    {% for cat in categories %}
+    <a href="{% url 'category' cat.slug %}" hx-get="{% url 'category' cat.slug %}" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true"
+       class="chip h-9 shrink-0 rounded-full border px-4 text-sm leading-[2.125rem] {% if active_category == cat.slug %}chip-active{% else %}border-white/10 bg-white/[0.03] text-slate-400 hover:border-violet-400/40 hover:text-white{% endif %}">{{ cat.name }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="stagger grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+    {% for book in books %}{% include "audiobooks/partials/card.html" %}{% empty %}
+    <div class="glass col-span-2 rounded-3xl px-6 py-14 text-center sm:col-span-3 md:col-span-3 lg:col-span-4 xl:col-span-5 2xl:col-span-6">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 shadow-lg shadow-violet-900/50">
+        <svg class="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z"/></svg>
+      </div>
+      <p class="font-display mt-5 text-lg font-bold text-white">Nothing here yet</p>
+      <p class="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-slate-400">Add audiobooks in the admin panel and mark them published to fill the library.</p>
+      <a href="/admin/" class="btn-grad mt-6 inline-flex h-10 items-center rounded-full px-5 text-sm font-semibold">Open admin</a>
+    </div>
+    {% endfor %}
+  </div>
+</section>

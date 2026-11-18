@@ -1,0 +1,161 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block bodyclass %}stor-page{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_storage.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a>
+  &rsaquo; <a href="{% url 'admin:audiobooks_cloudstorageaccount_changelist' %}">Storage API management</a>
+  &rsaquo; {{ account.name }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="stor-wrap">
+
+  <a class="stor-back" href="{% url 'admin:audiobooks_cloudstorageaccount_changelist' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    All storage backends
+  </a>
+
+  <header class="stor-detail-hero">
+    <div class="stor-detail-title">
+      <span class="stor-icon {% if is_local %}stor-icon-local{% else %}stor-icon-cloud{% endif %}" aria-hidden="true">
+        {% if is_local %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>
+        {% else %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.3 8.7 4 4 0 0 0 7 16.5"/><path d="M12 12v7M9 16l3-3 3 3"/></svg>
+        {% endif %}
+      </span>
+      <div>
+        <span class="stor-eyebrow">Storage backend</span>
+        <h1>{{ account.name }}</h1>
+        <p class="stor-detail-sub">
+          {% if is_local %}
+            MEDIA_ROOT · files served from this server
+          {% else %}
+            Cloudinary cloud <code>{{ account.cloud_name }}</code>
+          {% endif %}
+        </p>
+      </div>
+      <div class="stor-badges">
+        {% if is_local %}
+          <span class="stor-badge stor-badge-default">Default</span>
+          <span class="stor-badge stor-badge-lock">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            System Protected
+          </span>
+        {% else %}
+          <span class="stor-badge">Cloudinary account</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="stor-detail-kpis">
+      <div class="stor-mini-stat">
+        <span>Audiobooks here</span>
+        <strong>{{ book_count }}</strong>
+      </div>
+      <div class="stor-mini-stat">
+        <span>Media stored</span>
+        <strong>{{ usage.storage_used }}</strong>
+      </div>
+      <div class="stor-mini-stat">
+        <span>{% if is_local %}Files on disk{% else %}Assets{% endif %}</span>
+        <strong>{{ usage.objects }}</strong>
+      </div>
+      <div class="stor-mini-stat">
+        <span>{% if is_local %}Quota{% else %}Bandwidth (month){% endif %}</span>
+        <strong>{% if is_local %}Unlimited{% else %}{{ usage.bandwidth_used }}{% endif %}</strong>
+      </div>
+    </div>
+
+    {% if not is_local %}
+      {% if usage.error %}
+      <p class="stor-error">Live usage unavailable — {{ usage.error }}</p>
+      {% else %}
+      <div class="stor-meter-label">
+        <span>Credit consumption</span>
+        <strong{% if usage.credits_pct >= 90 %} class="stor-danger-text"{% endif %}>{{ usage.credits_pct }}%</strong>
+      </div>
+      <div class="stor-meter{% if usage.credits_pct >= 90 %} stor-meter-danger{% endif %}">
+        <span style="width: {{ usage.credits_pct }}%;"></span>
+      </div>
+      <p class="stor-meter-note">{{ usage.credits_label }}</p>
+      {% endif %}
+    {% endif %}
+  </header>
+
+  <section class="stor-table-card">
+    <div class="stor-table-head">
+      <div>
+        <h2>Audiobooks on this backend</h2>
+        <p>Only records explicitly routed to {{ account.name }} are listed.</p>
+      </div>
+      <span class="stor-section-count">{{ book_count }}</span>
+    </div>
+
+    {% if books %}
+    <div class="stor-table-scroll">
+      <table class="stor-books">
+        <thead>
+          <tr>
+            <th class="stor-col-cover"><span class="visually-hidden">Cover</span></th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>Duration</th>
+            <th>Added</th>
+            <th class="stor-col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for book in books %}
+          <tr>
+            <td class="stor-book-cover">
+              {% if book.cover_url %}
+                <img src="{{ book.cover_url }}" alt="Cover of {{ book.title }}" width="46" height="46" loading="lazy">
+              {% else %}
+                <span class="stor-cover-fallback" aria-hidden="true">♪</span>
+              {% endif %}
+            </td>
+            <td>
+              <a class="stor-book-title" href="{% url 'admin:audiobooks_audiobook_change' book.pk %}">{{ book.title }}</a>
+              <span class="stor-book-meta">{{ book.narrator }}</span>
+            </td>
+            <td>{{ book.author }}</td>
+            <td>{{ book.category.name|default:"—" }}</td>
+            <td class="stor-nowrap">{{ book.duration_hms }}</td>
+            <td class="stor-nowrap">{{ book.created_at|date:"d M Y" }}</td>
+            <td class="stor-col-actions">
+              <a class="stor-btn stor-btn-sm" href="{% url 'admin:audiobooks_audiobook_change' book.pk %}">Edit</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="stor-empty-detail">
+      <span class="stor-empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+      </span>
+      <h3>No audiobooks here yet</h3>
+      <p class="stor-note">
+        Choose <strong>{{ account.name }}</strong> as the Storage Destination
+        when adding a book to route its audio and cover here.
+      </p>
+      <a class="stor-btn stor-btn-primary" href="{% url 'admin:audiobooks_audiobook_add' %}">
+        Add an audiobook
+      </a>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
